@@ -11,6 +11,6 @@ int main1();
 int main2();
 int main3();
 int main4();
-int vezba_1();
+int vezba_alarmi();
 
 #endif /* VEZBA1_H_ */

@@ -11,7 +11,7 @@
 static void param_task(void* parametri)
 {
 	int* int_param = (int*)parametri;
-	int i=*int_param;
+	int i = *int_param;
 	for(;;i++)
 	{
 		printf("Test %d\n", i);

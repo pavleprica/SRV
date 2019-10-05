@@ -8,5 +8,6 @@ int main( void )
 //	main2();
 //	main3();
 //	main4();
+	vezba_alarmi();
 }
 
