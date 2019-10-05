@@ -83,7 +83,7 @@ static void alarm(void *param) {
         vTaskDelay(1000);
         alarm_time[task_index]--;
 
-        if(alarm_time[task_index] == 0) {
+        if(alarm_time[task_index] <= 0) {
             printf("%s\n", alarm_message[task_index]);
             fflush(stdout);
             remove_alarm(task_index);
@@ -148,6 +148,62 @@ static void print_all_alarms() {
     }
 }
 
+static int find_index_of_alarm(char *name) {
+
+    int i = 0;
+    for(i = 0; i < ALARM_NUMBER; i++) {
+        if(strcmp(name, alarm_names[i]) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+static void modify_alarm() {
+
+    char name[NAME_AND_MESSAGE_LEN];
+    printf("Alarm name: \n");
+    fflush(stdout);
+    scanf("%s", &name);
+
+    int alarm_index = find_index_of_alarm(name);
+
+    if(alarm_index == -1) {
+        printf("Ne postoji alarm sa tim imenom.\n");
+        fflush(stdout);
+        return;
+    }
+
+    char message[NAME_AND_MESSAGE_LEN];
+    printf("Unesite poruku: \n");
+    fflush(stdout);
+    scanf("%s", &message);
+    strcpy(alarm_message[alarm_index], message);
+
+    int time;
+    printf("Unesite vreme: \n");
+    fflush(stdout);
+    scanf("%d", &time);
+    alarm_time[alarm_index] = time;
+}
+
+
+static void delete_alarm() {
+    char name[NAME_AND_MESSAGE_LEN];
+    printf("Alarm name: \n");
+    fflush(stdout);
+    scanf("%s", &name);
+
+    int alarm_index = find_index_of_alarm(name);
+
+    if(alarm_index == -1) {
+        printf("Ne postoji alarm sa tim imenom.\n");
+        fflush(stdout);
+        return;
+    }
+
+    remove_alarm(alarm_index);
+}
 
 
 static void control_task(void *param) {
@@ -174,6 +230,12 @@ static void control_task(void *param) {
                 break;
             case PRINT_ALL_ALARMS:
                 print_all_alarms();
+                break;
+            case MODIFY_ALARM:
+                modify_alarm();
+                break;
+            case DELETE_ALARM:
+                delete_alarm();
                 break;
         }
     }
