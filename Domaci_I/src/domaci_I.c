@@ -21,7 +21,7 @@ static int items_put_in_map = 0;
 
 struct map_item {
     long key;
-    long *factor_values;\
+    long *factor_values;
     struct map_item *next;
 };
 
@@ -57,20 +57,35 @@ void print_map();
 int domaci_I(void) {
 
     long test_array[5] = {1, 2, 3, 4, 5};
-
-    iMapPut(5, test_array);
-    iMapPut(6, test_array);
-    iMapPut(5, test_array);
-    iMapPut(15, test_array);
-    iMapPut(25, test_array);
-    iMapPut(306, test_array);
+    printf("Enter bound: ");
+    flush_all();
+    long a, b;
+    scanf("%ld %ld", &a, &b);
+    while(a <= b)
+        iMapPut(a++, test_array);
+//    iMapPut(5, test_array);
+//    iMapPut(6, test_array);
+//    iMapPut(5, test_array);
+//    iMapPut(15, test_array);
+//    iMapPut(25, test_array);
+//    iMapPut(306, test_array);
+//    iMapPut(5, test_array);
+//    iMapPut(5, test_array);
+//    iMapPut(5, test_array);
+//    iMapPut(5, test_array);
+//    iMapPut(5, test_array);
+//    iMapPut(100, test_array);
+//    iMapPut(101, test_array);
+//    iMapPut(102, test_array);
+//    iMapPut(103, test_array);
+//    iMapPut(104, test_array);
 
     print_map();
     return 0;
 }
 
 int iHashFunction(int number) {
-    return number % MAX_MAP_SIZE;
+    return (number * 21315421) % MAX_MAP_SIZE;
 }
 
 void vFactorizeNumber(int number, int *factorsArrayStore) {
@@ -80,11 +95,10 @@ void vFactorizeNumber(int number, int *factorsArrayStore) {
 
 int iMapPut(long key, long *factor_values) {
     if(items_put_in_map >= MAX_MAP_SIZE) {
-        printf("Map full, unable to add element.\n");
+        printf("Map full, unable to add element. {%ld}\n", key);
         flush_all();
         return -1;
     }
-
 
     struct map_item *item = NEW_ALLOCATE(struct map_item);
     item->key = key;
@@ -118,7 +132,7 @@ int iMapPut(long key, long *factor_values) {
         }
     }
 
-
+    items_put_in_map++;
     return 1;
 }
 
