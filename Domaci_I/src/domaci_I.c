@@ -16,7 +16,9 @@
 
 #define NEW_ALLOCATE(node) (node*)malloc(sizeof(node))
 
+
 #define MAX_MAP_SIZE 30
+#define MAP_ARRAY_SIZE 10
 static int items_put_in_map = 0;
 
 struct map_item {
@@ -26,26 +28,20 @@ struct map_item {
 };
 
 struct map_table_item {
-    int index;
     struct map_item *map_item_head;
-    struct map_table_item *next;
 };
 
-struct map_table_item *head = NULL;
+struct map_table_item *map;
 
 int iHashFunction(int number);
 
-void vFactorizeNumber(int number, int *factorsArrayStore);
+void vFactorizeNumber(long number);
 
 int iMapPut(long key, long *factor_values);
 
-int check_for_collision(int index);
+void insert_into_map_item(int index, struct map_item *item);
 
-void insert_into_map_table(struct map_table_item *table_item);
-
-void insert_into_map_item(struct map_item *map_item_head, struct map_item *item);
-
-int check_if_element_exists(struct map_item *map_item_head, long key);
+int check_if_element_exists(int index, long key);
 
 struct map_table_item *get_table_item(int index);
 
@@ -53,16 +49,23 @@ void flush_all();
 
 void print_map();
 
+void init_map_array();
+
+int iMapSize();
+
+void add_factor_to_array(long *factorsArrayStore, int size, int divisor);
+
 
 int domaci_I(void) {
+    init_map_array();
 
-    long test_array[5] = {1, 2, 3, 4, 5};
     printf("Enter bound: ");
     flush_all();
     long a, b;
     scanf("%ld %ld", &a, &b);
     while(a <= b)
-        iMapPut(a++, test_array);
+        vFactorizeNumber(a++);
+
 //    iMapPut(5, test_array);
 //    iMapPut(6, test_array);
 //    iMapPut(5, test_array);
@@ -84,17 +87,54 @@ int domaci_I(void) {
     return 0;
 }
 
-int iHashFunction(int number) {
-    return (number * 21315421) % MAX_MAP_SIZE;
+void init_map_array() {
+    map = (struct map_table_item*)malloc(MAP_ARRAY_SIZE * sizeof(struct map_table_item));
+    int i;
+    for(i = 0; i < MAP_ARRAY_SIZE; i++) {
+        map[i].map_item_head = NULL;
+    }
 }
 
-void vFactorizeNumber(int number, int *factorsArrayStore) {
-	int divisor = 2;
+int iHashFunction(int number) {
+    return (number * 21315421) % MAP_ARRAY_SIZE;
+}
 
+void add_factor_to_array(long *factorsArrayStore, int size, int divisor) {
+    long *factorTmp = factorsArrayStore;
+
+    factorsArrayStore = (long *) realloc(factorsArrayStore, size * sizeof(long));
+    *(factorsArrayStore - (size - 2)) = (long) divisor;
+    *(factorsArrayStore - (size - 1)) = -1;
+}
+
+void vFactorizeNumber(long number) {
+    long num_holder = number;
+	int divisor = 2, size = 1;
+    long *factorsArrayStore;
+
+	factorsArrayStore = (long *) malloc(sizeof(long));
+	*factorsArrayStore = -1;
+
+	while(number > 1) {
+	    if(number % divisor == 0) {
+	        printf("Entered condition {number_holder: %ld, number: %ld, divisor: %d, size: %d}\n", num_holder, number, divisor, size);
+	        flush_all();
+	        size++;
+	        add_factor_to_array(factorsArrayStore, size, divisor);
+            printf("FACTORISED\n");
+            flush_all();
+	        number = number / divisor;
+//	        if(num_in_factorised()) {
+//
+//	        }
+	    } else
+	        divisor++;
+	}
+	iMapPut(num_holder, factorsArrayStore);
 }
 
 int iMapPut(long key, long *factor_values) {
-    if(items_put_in_map >= MAX_MAP_SIZE) {
+    if(iMapSize() >= MAX_MAP_SIZE) {
         printf("Map full, unable to add element. {%ld}\n", key);
         flush_all();
         return -1;
@@ -107,59 +147,22 @@ int iMapPut(long key, long *factor_values) {
 
     int index = iHashFunction((int)key);
 
-    if(!head) {
-        struct map_table_item *table_item = NEW_ALLOCATE(struct map_table_item);
-        table_item->index = index;
-        table_item->map_item_head = item;
-        table_item->next = NULL;
-
-        head = table_item;
+    if(map[index].map_item_head == NULL) {
+        struct map_table_item table_item = {.map_item_head = item};
+        map[index] = table_item;
     } else {
-        if(check_for_collision(index) == -1) {
-            struct map_table_item *table_item = NEW_ALLOCATE(struct map_table_item);
-            table_item->index = index;
-            table_item->map_item_head = item;
-            table_item->next = NULL;
-
-            insert_into_map_table(table_item);
-        } else {
-            struct map_table_item *table_item = get_table_item(index);
-            if(check_if_element_exists(table_item->map_item_head, item->key) == -1) {
-                insert_into_map_item(table_item->map_item_head, item);
-            }
-            else
-                return -2;
-        }
+        if(check_if_element_exists(index, item->key) == -1)
+            insert_into_map_item(index, item);
+        else return -2;
     }
 
     items_put_in_map++;
     return 1;
 }
 
-int check_for_collision(int index) {
-    struct map_table_item *tmp = head;
 
-    while(tmp != NULL) {
-        if(tmp->index == index)
-            return 1;
-        tmp = tmp->next;
-    }
-
-    return -1;
-}
-
-void insert_into_map_table(struct map_table_item *table_item) {
-    struct map_table_item *tmp = head;
-
-    while(tmp->index > table_item->index || tmp->next != NULL)
-        tmp = tmp->next;
-
-    table_item->next = tmp->next;
-    tmp->next = table_item;
-}
-
-void insert_into_map_item(struct map_item *map_item_head, struct map_item *item) {
-    struct map_item *tmp = map_item_head;
+void insert_into_map_item(int index, struct map_item *item) {
+    struct map_item *tmp = map[index].map_item_head;
 
     while(tmp->next != NULL)
         tmp = tmp->next;
@@ -167,8 +170,8 @@ void insert_into_map_item(struct map_item *map_item_head, struct map_item *item)
     tmp->next = item;
 }
 
-int check_if_element_exists(struct map_item *map_item_head, long key) {
-    struct map_item *tmp = map_item_head;
+int check_if_element_exists(int index, long key) {
+    struct map_item *tmp = map[index].map_item_head;
 
     while(tmp != NULL) {
         if(tmp->key == key) {
@@ -180,39 +183,34 @@ int check_if_element_exists(struct map_item *map_item_head, long key) {
     return -1;
 }
 
-struct map_table_item *get_table_item(int index) {
-    struct map_table_item *tmp = head;
-
-    while(tmp->next != NULL) {
-        if(tmp->index == index)
-            return tmp;
-        tmp = tmp->next;
-    }
-
-    return NULL;
-}
-
 void flush_all() {
     fflush(stdout);
     fflush(stdin);
 }
 
 void print_map() {
-    struct map_table_item *tmp = head;
+	int i, j;
 
-    struct map_item *item_tmp;
-    while(tmp != NULL) {
-        item_tmp = tmp->map_item_head;
-        printf("[MAP_TABLE_ITEM] {%d}:\n", tmp->index);
+	for(i = 0; i < MAP_ARRAY_SIZE; i++) {
+        struct map_item *item_tmp = map[i].map_item_head;
+        printf("[MAP_TABLE_ITEM] {%d}:\n", i);
         flush_all();
         while(item_tmp != NULL) {
-            printf("[MAP_ITEM] {KEY: %ld}\t", item_tmp->key);
+            printf("[MAP_ITEM] {KEY: %ld} {", item_tmp->key);
+            j = 0;
+            while(*(item_tmp->factor_values + j) != -1) {
+                printf("%ld ", *(item_tmp->factor_values + j++));
+            }
+            printf("}\t");
             flush_all();
             item_tmp = item_tmp->next;
         }
-        tmp = tmp->next;
         printf("\n");
         flush_all();
-    }
+	}
 
+}
+
+int iMapSize() {
+    return items_put_in_map;
 }
